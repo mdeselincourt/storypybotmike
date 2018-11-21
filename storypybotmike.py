@@ -41,11 +41,13 @@ def get_poem_tweets():
 	results = list(filter(lambda t: not t.in_reply_to_status_id, results))
 	return results
 
+# Intended for either of two entry points - last line or lambda_handler()
 def main():
 	logger.info("main() running")
 	inputTweets = get_poem_tweets()
 	logger.info(inputTweets)
-	
+	status = python_twitter.PostUpdate('My bot says: Hello world.')
+	logger.info("Tweeted; status = " + status)
 	
 # Configure this in lambda as the handler that Lambda will invoke
 def lambda_handler(_event_json, _context):
