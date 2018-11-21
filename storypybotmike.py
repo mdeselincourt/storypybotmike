@@ -1,4 +1,4 @@
-import twitter
+import twitter # python-twitter library
 import json
 import random
 import logging
@@ -22,7 +22,7 @@ except:
 # Log into Twitter
 # "**" expands credentials object into parameters
 logger.info("Logging into Twitter")
-twitterApi = twitter.Api(**credentials)
+python_twitter = twitter.Api(**credentials)
 
 ## Poem tweets search copied from Anne K Johnson
 def get_poem_tweets():
@@ -36,7 +36,7 @@ def get_poem_tweets():
 	query += '&lang=en'
 	# - 3 results
 	query += '&count=3'
-	results = twitterApi.GetSearch(raw_query=query)
+	results = python_twitter.GetSearch(raw_query=query)
 	# - remove any that are reply tweets
 	results = list(filter(lambda t: not t.in_reply_to_status_id, results))
 	return results
