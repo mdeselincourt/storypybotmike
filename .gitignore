@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# SECRETS (this is not part of the GitHub .gitignore, this is my own)
+SECRET/
+
 # Distribution / packaging
 .Python
 build/
