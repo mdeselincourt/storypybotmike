@@ -63,7 +63,14 @@ def main():
 	
 	p = story.protagonist
 	
-	output = logger.info("Here's a folk story. " + p.name + " the " + p.identity + " usually felt " + p.startingNaturalMood + ". But after an adventure, " + p.name + " felt " + p.endingNaturalMood + " most days.")
+	output = "Here's a folk story. " + p.name + " the " + p.identity + " usually felt " + p.startingNaturalMood + ". But after an adventure, " + p.name + " felt " + p.endingNaturalMood + " most days."
+		
+	output = "My bot says: " + output
+	
+	logger.info(output)
+	
+	if (len(output) < 281):
+		okToTweet = True
 		
 	################# ACT ON TWITTER #################
 		
@@ -82,9 +89,7 @@ def main():
 		logger.info("Logging into Twitter")
 		python_twitter = twitter.Api(**credentials)
 		# Use the API
-		inputTweets = get_poem_tweets()
-		logger.info(inputTweets)
-		status = python_twitter.PostUpdate('My bot says: ' + output)
+		status = python_twitter.PostUpdate(output)
 		logger.info("Tweeted; status = " + str(status))
 	else:
 		logger.info("Not OK to tweet");
