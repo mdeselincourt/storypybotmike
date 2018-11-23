@@ -58,8 +58,8 @@ def main():
 	story.protagonist = Protagonist()
 	story.protagonist.name = random.choice(firstNamesCorpus["firstNames"])
 	story.protagonist.identity = (random.choice(animalsCommonCorpus["animals"])).capitalize()
-	story.protagonist.startingNaturalMood = random.choice(moodsCorpus["moods"])
-	story.protagonist.endingNaturalMood = random.choice(moodsCorpus["moods"])
+	story.protagonist.startingNaturalMood = random.choice(moodsCorpus["deplorableMoods"])
+	story.protagonist.endingNaturalMood = random.choice(moodsCorpus["admirableMoods"])
 	
 	p = story.protagonist
 	
@@ -69,10 +69,13 @@ def main():
 	
 	logger.info(output)
 	
-	if (len(output) < 281):
-		okToTweet = True
+	if (len(output) > 280):
+		okToTweet = False
 		
 	################# ACT ON TWITTER #################
+		
+	if (localRun): 
+		okToTweet = False;
 		
 	if (okToTweet):
 		# Load twitter credentials from file into an object
@@ -98,6 +101,7 @@ def main():
 def lambda_handler(_event_json, _context):
 	logger.info(str(_event_json));
 	logger.info(str(_context));
+	localRun = False
 	main()
 
 def printObj(o):
@@ -105,5 +109,6 @@ def printObj(o):
 	
 # Detect 'standalone execution' and run main() if so
 if __name__ == "__main__":
-    main()
+	localRun = True
+	main()
 # This has to be the last thing...
