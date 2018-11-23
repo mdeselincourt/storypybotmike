@@ -71,11 +71,13 @@ def main():
 	
 	if (len(output) > 280):
 		okToTweet = False
+		logger.error("Intended tweet is too long")
 		
 	################# ACT ON TWITTER #################
 		
 	if (localRun): 
 		okToTweet = False;
+		logger.warn("I think I'm running locally.")
 		
 	if (okToTweet):
 		# Load twitter credentials from file into an object
