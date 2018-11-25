@@ -8,15 +8,13 @@ import os # Helps me import files
 from objdict import ObjDict # Helps me treat Python as if it's JavaScript haha
 # Don't forget to install these with pip -t . so they go in the repo???
 
-localRun = True # If in doubt, you are not deployed
-okToTweet = False # If in doubt, don't tweet!
+# THIS CODE DOESN'T GET INVOKED WHEN YOU ENTER VIA LAMBDA
 
-
-# Set up logging and ensure it's working
+# BEFORE ANYTHING ELSE Set up logging and ensure it's working
 logger = logging.getLogger()
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 logger.setLevel(logging.INFO)
-logger.info("Running and logging.");
+logger.info("Running global code and logging.");
 
 ## Poem tweets search copied from Anne K Johnson
 def get_poem_tweets():
@@ -36,8 +34,10 @@ def get_poem_tweets():
 	return results
 
 # Intended for either of two entry points - last line or lambda_handler()
-def main():
-	logger.info("main() running")
+def main(environment):
+	logger.info("main() running in " + environment + " environment")
+
+	okToTweet = False; # If in doubt, don't tweet.
 
 	################# PERFORM LOGIC ##################
 		
@@ -120,6 +120,19 @@ def main():
 	
 	logger.info(output)
 	
+	### To Tweet or not to Tweet
+	
+	## Prerequisites
+	
+	# Turn tweeting ON if we're in the cloud
+	if (environment == "Lambda"):
+		okToTweet = True
+	else:
+		logger.warning("I think I'm not running in a safe environment so I won't tweet")
+	
+	## Validation
+	
+	# Turn tweeting back OFF if the post is unacceptable
 	logger.info(str(len(output)) + " of 280 characters")
 	
 	if len(output) > 280:
@@ -131,12 +144,7 @@ def main():
 		logger.error("Intended tweet is concerningly short")
 		
 	################# ACT ON TWITTER #################
-		
-	if (localRun): 
-		okToTweet = False;
-		logger.warn("localRun is " + str(localRun))
-		logger.warn("I think I'm running locally so should not tweet")
-		
+
 	if (okToTweet):
 		# Load twitter credentials from file into an object
 		try:
@@ -159,10 +167,8 @@ def main():
 	
 # Configure this in lambda as the handler that Lambda will invoke
 def lambda_handler(_event_json, _context):
-	logger.info(str(_event_json));
-	logger.info(str(_context));
-	localRun = False
-	main()
+	logger.info("Running lambda_handler with event \n" + str(_event_json) + "\n and context \n" + str(_context))
+	main("Lambda")
 
 def printObj(o):
 	print(json.dumps(o, default=lambda o: getattr(o, '__dict__', str(o))))	
@@ -171,5 +177,5 @@ def printObj(o):
 if __name__ == "__main__":
 	localRun = True
 	logger.info("__name__ is __main__")
-	main()
+	main("Local")
 # This has to be the last thing...
