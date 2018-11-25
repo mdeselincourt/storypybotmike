@@ -6,8 +6,11 @@ import urllib.request # To be able to fetch data over http if assets are online 
 import random
 import os # Helps me import files
 from objdict import ObjDict # Helps me treat Python as if it's JavaScript haha
+# Don't forget to install these with pip -t . so they go in the repo???
 
+localRun = True # If in doubt, you are not deployed
 okToTweet = False # If in doubt, don't tweet!
+
 
 # Set up logging and ensure it's working
 logger = logging.getLogger()
@@ -131,7 +134,8 @@ def main():
 		
 	if (localRun): 
 		okToTweet = False;
-		logger.warn("I think I'm running locally.")
+		logger.warn("localRun is " + str(localRun))
+		logger.warn("I think I'm running locally so should not tweet")
 		
 	if (okToTweet):
 		# Load twitter credentials from file into an object
@@ -166,5 +170,6 @@ def printObj(o):
 # Detect 'standalone execution' and run main() if so
 if __name__ == "__main__":
 	localRun = True
+	logger.info("__name__ is __main__")
 	main()
 # This has to be the last thing...

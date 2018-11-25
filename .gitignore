@@ -9,6 +9,9 @@ __pycache__/
 # SECRETS (this is not part of the GitHub .gitignore, this is my own)
 SECRET/
 
+# Don't include ZIPs because the only ZIP I expect is my package for upload to AWS
+*.zip
+
 # Distribution / packaging
 .Python
 build/
