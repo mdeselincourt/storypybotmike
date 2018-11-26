@@ -144,7 +144,7 @@ def main(environment):
 	## Prerequisites
 	
 	# Turn tweeting ON if we're in the cloud
-	if (environment == "Lambda"):
+	if (environment == "Lambda Production"):
 		okToTweet = True
 	else:
 		logger.warning("I think I'm not running in a safe environment so I won't tweet")
@@ -187,13 +187,29 @@ def main(environment):
 # Configure this in lambda as the handler that Lambda will invoke
 def lambda_handler(_event_json, _context):
 	logger.info("Running lambda_handler with event \n" + str(_event_json) + "\n and context \n" + str(_context))
-	main("Lambda")
+	
+	event = json.loads(_event_json)
+	
+	if (event["testing"] == "True"):
+		main("Lambda Testing")
+	else:
+		main("Lambda Production")
 
 def printObj(o):
 	print(json.dumps(o, default=lambda o: getattr(o, '__dict__', str(o))))	
 	
 # Detect 'standalone execution' and run main() if so
 if __name__ == "__main__":
+	
+	event = json.loads('{"testing": "True"}')
+	
+	logger.info("event: " + json.dumps(event))
+	
+	if (event["testing"] == "True"):
+		logger.info("Testing")
+	else:
+		logger.info("Not testing")
+		
 	localRun = True
 	logger.info("__name__ is __main__")
 	main("Local")
