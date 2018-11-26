@@ -101,7 +101,7 @@ def main(environment):
 	
 	# Act 1
 	manuscript.acts.append([]) # Add act 1
-	manuscript.acts[1].append(p.name + " the " + p.identity + " often felt " + p.startingVirtueMood + " but sometimes felt " + p.startingFlawMood + ".")
+	manuscript.acts[1].append(p.name + " the " + p.identity + " often felt " + p.startingVirtueMood + ", but sometimes felt " + p.startingFlawMood + ".")
 	
 	# Act 2
 	manuscript.acts.append([]) # Add act 2
@@ -188,7 +188,7 @@ def main(environment):
 def lambda_handler(_event_json, _context):
 	logger.info("Running lambda_handler with event \n" + str(_event_json) + "\n and context \n" + str(_context))
 	
-	event = json.loads(_event_json)
+	event = _event_json
 	
 	if (event["testing"] == "True"):
 		main("Lambda Testing")
