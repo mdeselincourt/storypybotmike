@@ -52,19 +52,31 @@ def main(environment):
 	with open('dariusk/animals.common.json') as animalsCommonCorpus:
 		animalsCommonCorpus = json.loads(animalsCommonCorpus.read()) # Deserialise the JSON Object into its python equivalent, a <dict>
 
-	class Entity:
-		pass
+
 	
-	narrative = Entity()
-	narrative.protagonist = Entity()
+	narrative = ObjDict()
+	narrative.form = random.choice(["Heroic", "Tragic"])
+	""" 
+		Heroic form: 
+			P will overcome their known flaws and thus succeed.
+		Tragic form:
+			P's known flaws will cause their downfall despite their known virtues.
+			
+		Choose the ending then set up the first act without giving it away.
+	"""
+	
+	narrative.protagonist = ObjDict()
 	narrative.protagonist.name = random.choice(firstNamesCorpus["firstNames"])
 	narrative.protagonist.identity = (random.choice(animalsCommonCorpus["animals"])).capitalize()
-	narrative.protagonist.startingNaturalMood = random.choice(moodsCorpus["deplorableMoods"])
-	narrative.protagonist.endingNaturalMood = random.choice(moodsCorpus["admirableMoods"])
-	narrative.mentor = Entity()
+	narrative.protagonist.startingFlawMood = random.choice(moodsCorpus["deplorableMoods"])
+	narrative.protagonist.startingVirtueMood = random.choice(moodsCorpus["admirableMoods"])
+	narrative.protagonist.learnedVirtueMood = random.choice(moodsCorpus["admirableMoods"])
+	narrative.mentor = ObjDict()
 	narrative.mentor.name = random.choice(firstNamesCorpus["firstNames"])
 	narrative.mentor.identity = random.choice(animalsCommonCorpus["animals"]).capitalize()
 	narrative.mentor.naturalMood = random.choice(moodsCorpus["admirableMoods"])
+	
+	logger.info("Narrative object:\n" + json.dumps(narrative))
 	
 	"""
 	{
@@ -89,15 +101,22 @@ def main(environment):
 	
 	# Act 1
 	manuscript.acts.append([]) # Add act 1
-	manuscript.acts[1].append(p.name + " the " + p.identity + " usually felt " + p.startingNaturalMood + ".")
+	manuscript.acts[1].append(p.name + " the " + p.identity + " often felt " + p.startingVirtueMood + " but sometimes felt " + p.startingFlawMood + ".")
 	
 	# Act 2
 	manuscript.acts.append([]) # Add act 2
-	manuscript.acts[2].append("But one day " + p.name + " met " + m.name + " the " + m.identity + ".")
+	manuscript.acts[2].append("One day " + p.name + " met " + m.name + " the " + m.identity + ".")
 	
 	# Act 3
 	manuscript.acts.append([])
-	manuscript.acts[3].append("They went on an adventure, after which " + p.name + " felt " + p.endingNaturalMood + " most days.")
+	
+	if (narrative.form == "Heroic"):
+		manuscript.acts[3].append("They went on an adventure and " + p.name + " learned to feel more " +  p.learnedVirtueMood + ", and never felt " + p.startingFlawMood + " again.")
+	elif (narrative.form == "Tragic"):
+		manuscript.acts[3].append("They went on an adventure, but " + p.name + " acted really " + p.startingFlawMood + " and this led to " + p.name + "'s downfall.")
+	else:
+		logger.error("No third act!")
+		manusript.acts[3].append("... the end I guess?")
 		
 	logger.info("manuscriptJson is\n" + json.dumps(manuscript))
 		
