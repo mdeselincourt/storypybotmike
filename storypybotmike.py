@@ -6,6 +6,9 @@ import urllib.request # To be able to fetch data over http if assets are online 
 import random
 import os # Helps me import files
 from objdict import ObjDict # Helps me treat Python as if it's JavaScript haha
+# from nltk import CFG # Representation of a context-free-grammar for code-light text generation
+# from nltk.parse.generate import generate # For generation of text from a context-free-grammar
+
 # Don't forget to install these with pip -t . so they go in the repo???
 
 # THIS CODE DOESN'T GET INVOKED WHEN YOU ENTER VIA LAMBDA
@@ -14,11 +17,11 @@ from objdict import ObjDict # Helps me treat Python as if it's JavaScript haha
 logger = logging.getLogger()
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 logger.setLevel(logging.INFO)
-logger.info("Running global code and logging.");
+logger.info("Running global code. Logging is loaded.");
 
 ## Poem tweets search copied from Anne K Johnson
 def get_poem_tweets():
-	logger.info("Running poem_tweets()...")
+	logger.info("Running get_poem_tweets()...")
 	# - have a poetry or poem hashtag
 	# - 'safe' only
 	# - no links
@@ -42,42 +45,72 @@ def main(environment):
 	################# PERFORM LOGIC ##################
 		
 	#with urllib.request.urlopen("https://raw.githubusercontent.com/dariusk/corpora/master/data/humans/moods.json") as url:
+
+	corpora = loadCorpora()
+	
+	narrative = buildNarrative(corpora)
+	
+	#testCFG()
+	
+	manuscript = writeManuscript(narrative)
+	
+	output = chooseOutput(manuscript)
+		
+	logger.info(output)
+	
+	### To Tweet or not to Tweet
+	
+	## Prerequisites
+	
+	# Turn tweeting ON if we're in the cloud
+	if (environment == "Lambda Production"):
+		okToTweet = True
+	else:
+		logger.warning("Environment is not Lambda Production. Not activating tweeting.")
+	
+	## Validation
+	
+	# Turn tweeting back OFF if the post is unacceptable
+	logger.info(str(len(output)) + " of 280 characters")
+	
+	if len(output) > 280:
+		okToTweet = False
+		logger.error("Intended tweet is too long, deactivating tweeting")
+		
+	if len(output) < 13:
+		okToTweet = False
+		logger.error("Intended tweet is concerningly short, deactivating tweeting")
+		
+	################# ACT ON TWITTER #################
+
+	if (okToTweet):
+		tweet(output)
+	else:
+		logger.warning("Skipping tweeting step");
+	#
+#
+	
+## Load Corpora ##
+def loadCorpora():
+	logger.info("loadCorpora() running...")
+	loadedCorpora = {}
 	
 	with open('dariusk/moods.json') as moodsCorpus:
-		moodsCorpus = json.loads(moodsCorpus.read()) # Deserialise the JSON Object into its python equivalent, a <dict>
+		moodsCorpusObject = json.loads(moodsCorpus.read()) # Can't json.loads more than once it seems?
+		loadedCorpora["moods"] = moodsCorpusObject["moods"] # Deserialise the JSON Object's main body into its python equivalent, a <dict>
+		loadedCorpora["admirableMoods"] = moodsCorpusObject["admirableMoods"] # Deserialise the JSON Object's main body into its python equivalent, a <dict>
+		loadedCorpora["deplorableMoods"] = moodsCorpusObject["deplorableMoods"] # Deserialise the JSON Object's main body into its python equivalent, a <dict>
 
 	with open('dariusk/firstNames.json') as firstNamesCorpus:
-		firstNamesCorpus = json.loads(firstNamesCorpus.read()) # Deserialise the JSON Object into its python equivalent, a <dict>
+		loadedCorpora["firstNames"] = json.loads(firstNamesCorpus.read())["firstNames"] # Deserialise the JSON Object's main body into its python equivalent, a <dict>
 
 	with open('dariusk/animals.common.json') as animalsCommonCorpus:
-		animalsCommonCorpus = json.loads(animalsCommonCorpus.read()) # Deserialise the JSON Object into its python equivalent, a <dict>
-
-
+		loadedCorpora["animals"] = json.loads(animalsCommonCorpus.read())["animals"] # Deserialise the JSON Object's main body into its python equivalent, a <dict>
+		
+	return loadedCorpora
+#
 	
-	narrative = ObjDict()
-	narrative.form = random.choice(["Heroic", "Tragic"])
-	""" 
-		Heroic form: 
-			P will overcome their known flaws and thus succeed.
-		Tragic form:
-			P's known flaws will cause their downfall despite their known virtues.
-			
-		Choose the ending then set up the first act without giving it away.
-	"""
-	
-	narrative.protagonist = ObjDict()
-	narrative.protagonist.name = random.choice(firstNamesCorpus["firstNames"])
-	narrative.protagonist.identity = (random.choice(animalsCommonCorpus["animals"])).capitalize()
-	narrative.protagonist.startingFlawMood = random.choice(moodsCorpus["deplorableMoods"])
-	narrative.protagonist.startingVirtueMood = random.choice(moodsCorpus["admirableMoods"])
-	narrative.protagonist.learnedVirtueMood = random.choice(moodsCorpus["admirableMoods"])
-	narrative.mentor = ObjDict()
-	narrative.mentor.name = random.choice(firstNamesCorpus["firstNames"])
-	narrative.mentor.identity = random.choice(animalsCommonCorpus["animals"]).capitalize()
-	narrative.mentor.naturalMood = random.choice(moodsCorpus["admirableMoods"])
-	
-	logger.info("Narrative object:\n" + json.dumps(narrative))
-	
+## Build Narrative ##
 	"""
 	{
 		"Virtues": {
@@ -88,7 +121,26 @@ def main(environment):
 		}
 	}
 	"""
+def buildNarrative(corpora):
+	logger.info("buildNarrative() running...")
+	newNarrative = ObjDict()
+	newNarrative.form = random.choice(["Heroic", "Tragic"])
+	newNarrative.protagonist = ObjDict()
+	newNarrative.protagonist.name = random.choice(corpora["firstNames"])
+	newNarrative.protagonist.identity = (random.choice(corpora["animals"])).capitalize()
+	newNarrative.protagonist.startingFlawMood = random.choice(corpora["deplorableMoods"])
+	newNarrative.protagonist.startingVirtueMood = random.choice(corpora["admirableMoods"])
+	newNarrative.protagonist.learnedVirtueMood = random.choice(corpora["admirableMoods"])
+	newNarrative.mentor = ObjDict()
+	newNarrative.mentor.name = random.choice(corpora["firstNames"])
+	newNarrative.mentor.identity = random.choice(corpora["animals"]).capitalize()
+	newNarrative.mentor.naturalMood = random.choice(corpora["admirableMoods"])
+	#logger.info("Narrative object to json:\n" + json.dumps(newNarrative))
+	return newNarrative;
+#
 	
+def writeManuscript(narrative):
+	logger.info("writeManuscript() running...")
 	p = narrative.protagonist
 	m = narrative.mentor
 	
@@ -116,10 +168,15 @@ def main(environment):
 		manuscript.acts[3].append("They went on an adventure, but " + p.name + " acted really " + p.startingFlawMood + " and this led to " + p.name + "'s downfall.")
 	else:
 		logger.error("No third act!")
-		manusript.acts[3].append("... the end I guess?")
+		manusript.acts[3].append("... the end, I guess?")
 		
-	logger.info("manuscriptJson is\n" + json.dumps(manuscript))
-		
+	#logger.info("manuscript json is:\n" + json.dumps(manuscript))
+	
+	return manuscript
+#
+	
+def chooseOutput(manuscript):
+	logger.info("chooseOutput() running...")
 	lenBudget = 266
 	
 	storySnippet = ""
@@ -127,7 +184,7 @@ def main(environment):
 	for act in manuscript.acts:
 		for line in act:
 			if (len(line) == 0):
-				logger.info("Skipping an empty line")
+				logger.info("Skipping an empty line") # On assumption that we will empty tweeted lines and store what's left
 				pass
 			elif (len(line) < lenBudget):
 				storySnippet += " " + line
@@ -135,58 +192,34 @@ def main(environment):
 			else:
 				break; break;
 		
-	output = "My bot says: " + storySnippet
+	output = "Bot here!" + storySnippet
 	
-	logger.info(output)
-	
-	### To Tweet or not to Tweet
-	
-	## Prerequisites
-	
-	# Turn tweeting ON if we're in the cloud
-	if (environment == "Lambda Production"):
-		okToTweet = True
-	else:
-		logger.warning("I think I'm not running in a safe environment so I won't tweet")
-	
-	## Validation
-	
-	# Turn tweeting back OFF if the post is unacceptable
-	logger.info(str(len(output)) + " of 280 characters")
-	
-	if len(output) > 280:
-		okToTweet = False
-		logger.error("Intended tweet is too long")
-		
-	if len(output) < 13:
-		okToTweet = False
-		logger.error("Intended tweet is concerningly short")
-		
-	################# ACT ON TWITTER #################
+	return output
+#
 
-	if (okToTweet):
-		# Load twitter credentials from file into an object
-		try:
-			with open('SECRET/credentials.json') as credFile:
-				logger.info("Loading credentials from file")
-				credentials = json.loads(credFile.read())
-		except:
-			logger.critical("Error while opening credentials. If you cloned this, you need to add your own Twitter credentials file, for location see code, for contents see https://annekjohnson.com/blog/2017/06/python-twitter-bot-on-aws-lambda/index.html");
-			exit();
+def tweet(output):
+	logger.info("tweet() running...")
+	# Load twitter credentials from file into an object
+	try:
+		with open('SECRET/credentials.json') as credFile:
+			logger.info("Loading credentials from file")
+			credentials = json.loads(credFile.read())
+	except:
+		logger.critical("Error while opening credentials. If you cloned this, you need to add your own Twitter credentials file, for location see code, for contents see https://annekjohnson.com/blog/2017/06/python-twitter-bot-on-aws-lambda/index.html");
+		exit();
 
-		# Log into Twitter
-		# "**" expands credentials object into parameters
-		logger.info("Logging into Twitter")
-		python_twitter = twitter.Api(**credentials)
-		# Use the API
-		status = python_twitter.PostUpdate(output)
-		logger.info("Tweeted; status = " + str(status))
-	else:
-		logger.warning("Not OK to tweet");
+	# Log into Twitter
+	# "**" expands credentials object into parameters
+	logger.info("Logging into Twitter")
+	python_twitter = twitter.Api(**credentials)
+	# Use the API
+	status = python_twitter.PostUpdate(output)
+	logger.info("Tweeted; status = " + str(status))
+#
 	
 # Configure this in lambda as the handler that Lambda will invoke
 def lambda_handler(_event_json, _context):
-	logger.info("Running lambda_handler with event \n" + str(_event_json) + "\n and context \n" + str(_context))
+	logger.info("Running lambda_handler() with event \n" + str(_event_json) + "\n and context \n" + str(_context))
 	
 	event = _event_json
 	
@@ -194,23 +227,51 @@ def lambda_handler(_event_json, _context):
 		main("Lambda Testing")
 	else:
 		main("Lambda Production")
+#
 
+# Shorthand for turning a Python Object to JSON
 def printObj(o):
 	print(json.dumps(o, default=lambda o: getattr(o, '__dict__', str(o))))	
+#
+	
+def testCFG():
+	logger.error("I haven't imported NLTK because it's big")
+	grammar = CFG.fromstring("""S -> NP VP
+    NP -> Det N
+    PP -> P NP
+    VP -> 'slept'
+    VP -> 'saw' NP
+    VP -> 'walked' PP
+    Det -> 'the'
+    Det -> 'a'
+    N -> 'man'
+    N -> 'park'
+    N -> 'dog'
+    P -> 'in'
+    P -> 'with'""")
+	
+	sentences = generate(grammar, n=2)
+		
+	logger.warn("Here are some sample CFG-generated sentences")
+	
+	for sentence in sentences:
+		logger.info(">" + str(sentence))
+#
 	
 # Detect 'standalone execution' and run main() if so
+logger.info("Checking for __main__ execution")
 if __name__ == "__main__":
+	logger.info("__name__ is __main__")
 	
 	event = json.loads('{"testing": "True"}')
 	
 	logger.info("event: " + json.dumps(event))
 	
 	if (event["testing"] == "True"):
-		logger.info("Testing")
+		logger.info("event['testing'] is True")
 	else:
-		logger.info("Not testing")
+		logger.info("event['testing'] is not True")
 		
 	localRun = True
-	logger.info("__name__ is __main__")
 	main("Local")
 # This has to be the last thing...
