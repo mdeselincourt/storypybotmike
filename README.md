@@ -20,12 +20,21 @@ Here's what I learned while doing it:
 I chose to read the event like this
 
 ~~~~
-try:
-  if (event["detail-type"] == "Scheduled Event"):
-    # "Production" case
-  elif (event["detail-type"] == "Custom Test Event"):
-    # Test case
-  #...
-# except ... ... ...
-  # Log failure to read the event
+def lambda_handler(event, _context):
+  try:
+    if (event["detail-type"] == "Scheduled Event"):
+      # "Production" case
+    elif (event["detail-type"] == "Custom Test Event"):
+      # Test case
+    #...
+  # except ... ... ...
+    # Log failure to read the event
 ~~~~
+
+I also included a final 
+
+~~~~
+if __name__ == "__main__":
+~~~~
+
+to also support running locally through the command-line.
