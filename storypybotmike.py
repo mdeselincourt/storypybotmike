@@ -218,15 +218,27 @@ def tweet(output):
 #
 	
 # Configure this in lambda as the handler that Lambda will invoke
-def lambda_handler(_event_json, _context):
-	logger.info("Running lambda_handler() with event \n" + str(_event_json) + "\n and context \n" + str(_context))
+def lambda_handler(event, _context):
+	logger.info("Running lambda_handler() with event \n" + str(event) + "\n and context \n" + str(_context))
 	
-	event = _event_json
+	logger.info("json.dumps(event) = " + json.dumps(event))
 	
-	if (event["testing"] == "True"):
-		main("Lambda Testing")
-	else:
-		main("Lambda Production")
+	try:
+		if (event["testing"] == "True"):
+			logger.info("Invoking main('Lambda Testing')")
+			main("Lambda Testing")
+		else:
+			logger.warn("Testing is findable but not what we expected")
+	except:
+		try:
+			if (event["detail-type"] == "Scheduled Event"):
+				logger.warn("Lambda event is as expected, invoking main('Lambda Production')")
+				main("Lambda Production")
+		except:
+			logger.error("Exception while looking for event['detail-type']")
+		
+		
+	logger.info("End of lambda execution")
 #
 
 # Shorthand for turning a Python Object to JSON
@@ -274,4 +286,5 @@ if __name__ == "__main__":
 		
 	localRun = True
 	main("Local")
+	logger.info("End of local execution")
 # This has to be the last thing...
