@@ -6,6 +6,7 @@ import urllib.request # To be able to fetch data over http if assets are online 
 import random
 import os # Helps me import files
 from objdict import ObjDict # Helps me treat Python as if it's JavaScript haha
+from botocore.exceptions import ClientError
 
 # Don't forget to install these with pip -t . so they go in the repo and can be deployed to AWS
 
@@ -41,14 +42,20 @@ def main(environment):
 	################# PERFORM LOGIC ##################
 		
 	#with urllib.request.urlopen("https://raw.githubusercontent.com/dariusk/corpora/master/data/humans/moods.json") as url:
+	
+	s3 = boto3.resource('s3') # Boto will automatically get credentials from the filesystem (running locally) or the function's user account (lambda)	
 
+	logger.info(str(checkS3ForManuscript(s3)))
+	
+	## Writing new story
+	
 	corpora = loadCorpora()
 	
 	narrative = buildNarrative(corpora)
 	
-	#testCFG()
+	manuscript = loadOrWriteManuscript(narrative, corpora, s3)
 	
-	manuscript = writeManuscript(narrative, corpora)
+	# saveManuscript(manuscript)
 	
 	output = chooseOutput(manuscript)
 		
@@ -171,8 +178,49 @@ def buildNarrative(corpora):
 	return n;
 #
 	
-def writeManuscript(narrative, corpora):
-	logger.info("writeManuscript() running...")
+def checkS3ForManuscript(s3):
+	try:
+		getAttempt = s3.Object('storypybotmike', "Manuscript.json").get()
+		return True
+	except ClientError as e:
+		if e.response['Error']['Code'] == "NoSuchKey":
+			return False
+		else:
+			logger.error("Error code is " + e.response['Error']['Code'])
+	except Exception as ee:
+		logger.error("Unexpected exception: " + str(ee))
+	
+def loadOrWriteManuscript(narrative, corpora, s3):
+	logger.info("loadOrWriteManuscript() running...")
+	
+	## Check for a manuscript already in S3
+	
+	manuscriptFound = False
+	
+	## End up with either True and a getAttempt, or just False
+	try:
+		getAttempt = s3.Object('storypybotmike', "Manuscript.json").get()
+		logger.info("getAttempt is " + str(getAttempt))
+		manuscriptFound = True
+	except ClientError as e:
+		if e.response['Error']['Code'] == "NoSuchKey":
+			logger.info("File not found")
+		else:
+			logger.error("Error code is " + e.response['Error']['Code'])
+	except Exception as ee:
+		logger.error("WTF " + str(ee))
+		
+	#logger.info("manuscriptFound = " + str(manuscriptFound)) 
+	
+	if manuscriptFound:
+		logger.info("Loading manuscript from S3")
+		return json.loads(getAttempt['Body'].read().decode('utf-8'))
+	else:
+		logger.info("Writing a new manuscript")
+		pass
+	
+	## Prepare to write manuscript 
+	
 	p = narrative.protagonist
 	m = narrative.mentor
 	v = narrative.villain
@@ -184,39 +232,45 @@ def writeManuscript(narrative, corpora):
 	v.vice = corpora["superVirtues"][p.lackingVirtueKey]["indulgence"]	
 	
 	# Write the story in manuscript form i.e. broken down into sentences short enough to tweet.
-	manuscript = ObjDict()
-	manuscript.acts = []
+	manuscript = []
 
 	# Act 0 
-	manuscript.acts.append(["Here's another folk story."])
+	manuscript.append("Here's another folk story.")
 	
 	# Act 1
-	manuscript.acts.append([]) # Add act 1
-	manuscript.acts[1].append(p.name + " was " + aan(p.virtue) + " but " + p.vice + " " + p.identity.title() + ".")
-	manuscript.acts[1].append("Like all the animals, " + p.name + " lived under the tyranny of " + v.name + " the " + v.virtue.capitalize() + " " + v.identity.title() + ".")
+	manuscript.append(p.name + " was " + aan(p.virtue) + " but " + p.vice + " " + p.identity.title() + ".")
+	manuscript.append("Like all the animals, " + p.name + " lived under the tyranny of " + v.name + " the " + v.virtue.capitalize() + " " + v.identity.title() + ".")
 	
 	# Act 2
-	manuscript.acts.append([]) # Add act 2
-	manuscript.acts[2].append("One day, " + m.name + " the " + m.identity.title() + " asked for " + p.name + "'s help to rid them of " + v.name + ".")
-	manuscript.acts[2].append(p.name + " agreed, and together they learned that " + v.name + " was prone to being " + v.vice + "." )
+	manuscript.append("One day, " + m.name + " the " + m.identity.title() + " asked for " + p.name + "'s help to rid them of " + v.name + ".")
+	manuscript.append(p.name + " agreed, and together they learned that " + v.name + " was prone to being " + v.vice + "." )
 	
 	# Act 3
-	manuscript.acts.append([])
 	
 	if (narrative.form == "heroic"):
-		manuscript.acts[3].append("By the time they finally met, " + p.name + " had learned to be more " + p.lackingVirtueKey + ", and played on " + v.name + "'s " + v.vice + " side.")
-		manuscript.acts[3].append(v.name + " was vanquished, and the animals lived happily ever after.")
+		manuscript.append("By the time they finally met, " + p.name + " had learned to be more " + p.lackingVirtueKey + ", and played on " + v.name + "'s " + v.vice + " side.")
+		manuscript.append(v.name + " was vanquished, and the animals lived happily ever after.")
 	elif (narrative.form == "tragic"):
-		manuscript.acts[3].append("When they finally met, the " + v.identity + " " + v.name + " was feeling particularly " + v.virtue + ", and " + p.name + " could not help but be " + p.vice + ".")
-		manuscript.acts[3].append(p.name + " was defeated, and " + m.name + " fled to seek a true hero. The end... or is it?")
+		manuscript.append("When they finally met, the " + v.identity + " " + v.name + " was feeling particularly " + v.virtue + ", and " + p.name + " could not help but be " + p.vice + ".")
+		manuscript.append(p.name + " was defeated, and " + m.name + " fled to seek a true hero. The end... or is it?")
 	else:
 		logger.error("No third act!")
-		manusript.acts[3].append("... the end, I guess?")
+		manusript.append("... the end, I guess?")
 		
 	#logger.info("manuscript json is:\n" + json.dumps(manuscript))
 	
 	return manuscript
 #
+
+def saveManuscript(manuscript):
+	logger.info("saveManuscript() running, str(manu..) = " + str(manuscript))
+			
+	try:
+		s3.Object('storypybotmike', "Manuscript.json").put(
+			Body=(bytes(json.dumps(manuscript, indent=2).encode('UTF-8')))
+		)
+	except:
+		logger.error("Exception while trying to write to s3 :(")
 	
 def chooseOutput(manuscript):
 	logger.info("chooseOutput() running...")
@@ -224,16 +278,15 @@ def chooseOutput(manuscript):
 	
 	storySnippet = ""
 	
-	for act in manuscript.acts:
-		for line in act:
-			if (len(line) == 0):
-				logger.info("Skipping an empty line") # On assumption that we will empty tweeted lines and store what's left
-				pass
-			elif (len(line) < lenBudget):
-				storySnippet += " " + line
-				line = ""
-			else:
-				break; break;
+	for line in manuscript:
+		if (len(line) == 0):
+			logger.info("Skipping an empty line") # On assumption that we will empty tweeted lines and store what's left
+			pass
+		elif (len(line) < lenBudget):
+			storySnippet += " " + line
+			line = ""
+		else:
+			break; break;
 		
 	output = "Bot here!" + storySnippet
 	
@@ -244,9 +297,9 @@ def tweet(output):
 	logger.info("tweet() running...")
 	# Load twitter credentials from file into an object
 	try:
-		with open('SECRET/credentials.json') as credFile:
+		with open('SECRET/twitterCredentials.json') as twitterCredFile:
 			logger.info("Loading credentials from file")
-			credentials = json.loads(credFile.read())
+			twitterCredentials = json.loads(twitterCredFile.read())
 	except:
 		logger.critical("Error while opening credentials. If you cloned this, you need to add your own Twitter credentials file, for location see code, for contents see https://annekjohnson.com/blog/2017/06/python-twitter-bot-on-aws-lambda/index.html");
 		exit();
@@ -254,7 +307,7 @@ def tweet(output):
 	# Log into Twitter
 	# "**" expands credentials object into parameters
 	logger.info("Logging into Twitter")
-	python_twitter = twitter.Api(**credentials)
+	python_twitter = twitter.Api(**twitterCredentials)
 	# Use the API
 	status = python_twitter.PostUpdate(output)
 	logger.info("Tweeted; status = " + str(status))
