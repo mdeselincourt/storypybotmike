@@ -1,23 +1,19 @@
+import logging
 import twitter # python-twitter library
 import json
-import logging
 import boto3 # Boto (a species of Amazon river dolphin!) is the AWS Python library
 import urllib.request # To be able to fetch data over http if assets are online not deployed in the app
 import random
 import os # Helps me import files
 from objdict import ObjDict # Helps me treat Python as if it's JavaScript haha
-# from nltk import CFG # Representation of a context-free-grammar for code-light text generation
-# from nltk.parse.generate import generate # For generation of text from a context-free-grammar
 
-# Don't forget to install these with pip -t . so they go in the repo???
+# Don't forget to install these with pip -t . so they go in the repo and can be deployed to AWS
 
-# THIS CODE DOESN'T GET INVOKED WHEN YOU ENTER VIA LAMBDA
-
-# BEFORE ANYTHING ELSE Set up logging and ensure it's working
+# FIRST Set up logging
 logger = logging.getLogger()
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 logger.setLevel(logging.INFO)
-logger.info("Running global code. Logging is loaded.");
+logger.info("Global logging code is running.");
 
 ## Poem tweets search copied from Anne K Johnson
 def get_poem_tweets():
@@ -52,7 +48,7 @@ def main(environment):
 	
 	#testCFG()
 	
-	manuscript = writeManuscript(narrative)
+	manuscript = writeManuscript(narrative, corpora)
 	
 	output = chooseOutput(manuscript)
 		
@@ -95,18 +91,21 @@ def loadCorpora():
 	logger.info("loadCorpora() running...")
 	loadedCorpora = {}
 	
-	with open('dariusk/moods.json') as moodsCorpus:
+	with open('corpora/moods.json') as moodsCorpus:
 		moodsCorpusObject = json.loads(moodsCorpus.read()) # Can't json.loads more than once it seems?
 		loadedCorpora["moods"] = moodsCorpusObject["moods"] # Deserialise the JSON Object's main body into its python equivalent, a <dict>
 		loadedCorpora["admirableMoods"] = moodsCorpusObject["admirableMoods"] # Deserialise the JSON Object's main body into its python equivalent, a <dict>
 		loadedCorpora["deplorableMoods"] = moodsCorpusObject["deplorableMoods"] # Deserialise the JSON Object's main body into its python equivalent, a <dict>
 
-	with open('dariusk/firstNames.json') as firstNamesCorpus:
+	with open('corpora/dariusk.firstNames.json') as firstNamesCorpus:
 		loadedCorpora["firstNames"] = json.loads(firstNamesCorpus.read())["firstNames"] # Deserialise the JSON Object's main body into its python equivalent, a <dict>
 
-	with open('dariusk/animals.common.json') as animalsCommonCorpus:
+	with open('corpora/dariusk.animals.common.json') as animalsCommonCorpus:
 		loadedCorpora["animals"] = json.loads(animalsCommonCorpus.read())["animals"] # Deserialise the JSON Object's main body into its python equivalent, a <dict>
 		
+	with open('corpora/superVirtues.json') as superVirtuesCorpus:
+		loadedCorpora["superVirtues"] = json.loads(superVirtuesCorpus.read()) # Deserialise the JSON Object's main body into its python equivalent, a <dict>
+
 	return loadedCorpora
 #
 	
@@ -122,50 +121,94 @@ def loadCorpora():
 	}
 	"""
 def buildNarrative(corpora):
+	
+	#superVirtues = ["active", "confident", "kind", "positive", "wise"]
+	#superVices = ["selfish", "cowardly", "passive", "despairing", "hysterical"]
+	#heroisms = ["self-sacrificial", "brave", "tireless", "undespairing", "unflappable"]
+	#villainies = ["seductive", "fearless", "relentless", "fanatical", "calculating"]
+	#indulgences	= ["greedy", "cowardly", "slothful", "bi-polar", "irrational"]
+		
 	logger.info("buildNarrative() running...")
-	newNarrative = ObjDict()
-	newNarrative.form = random.choice(["Heroic", "Tragic"])
-	newNarrative.protagonist = ObjDict()
-	newNarrative.protagonist.name = random.choice(corpora["firstNames"])
-	newNarrative.protagonist.identity = (random.choice(corpora["animals"])).capitalize()
-	newNarrative.protagonist.startingFlawMood = random.choice(corpora["deplorableMoods"])
-	newNarrative.protagonist.startingVirtueMood = random.choice(corpora["admirableMoods"])
-	newNarrative.protagonist.learnedVirtueMood = random.choice(corpora["admirableMoods"])
-	newNarrative.mentor = ObjDict()
-	newNarrative.mentor.name = random.choice(corpora["firstNames"])
-	newNarrative.mentor.identity = random.choice(corpora["animals"]).capitalize()
-	newNarrative.mentor.naturalMood = random.choice(corpora["admirableMoods"])
-	#logger.info("Narrative object to json:\n" + json.dumps(newNarrative))
-	return newNarrative;
+	n = ObjDict() # Narrative
+	p = ObjDict() #  Protagonist
+	v = ObjDict() #  Villain (not antagoist)
+	
+	n.form = random.choice(["heroic", "tragic"])
+	
+	## Protagonist
+
+	p.name = random.choice(corpora["firstNames"])
+	p.identity = (random.choice(corpora["animals"])).title() # Capitalise each word
+	
+	SVs = corpora["superVirtues"]
+
+	# Assign protagonist's main virtue and vice
+	pvids = random.sample(range(5), 2)
+	p.mainVirtueKey = list(SVs.keys())[pvids[0]]
+	p.lackingVirtueKey = list(SVs.keys())[pvids[1]]
+	
+	## Villain
+	
+	v.name = random.choice(corpora["firstNames"])
+	v.identity = (random.choice(corpora["animals"]))
+
+	# Assign protagonist's main virtue and vice
+	vvids = random.sample(range(5), 2)
+	v.mainVirtueKey = list(SVs.keys())[vvids[0]]
+	v.lackingVirtueKey = list(SVs.keys())[vvids[1]]
+	
+	# Mentor
+	m = ObjDict()
+	m.name = random.choice(corpora["firstNames"])
+	m.identity = random.choice(corpora["animals"])
+	
+	n.protagonist = p
+	n.villain = v
+	n.mentor = m
+	
+	logger.info("str(narrative) = " + str(n))
+	
+	return n;
 #
 	
-def writeManuscript(narrative):
+def writeManuscript(narrative, corpora):
 	logger.info("writeManuscript() running...")
 	p = narrative.protagonist
 	m = narrative.mentor
+	v = narrative.villain
+	
+	## Enrich characters with useful shorthands
+	p.virtue = p.mainVirtueKey
+	p.vice = corpora["superVirtues"][p.lackingVirtueKey]["opposite"]
+	v.virtue = corpora["superVirtues"][p.mainVirtueKey]["villainy"]
+	v.vice = corpora["superVirtues"][p.lackingVirtueKey]["indulgence"]	
 	
 	# Write the story in manuscript form i.e. broken down into sentences short enough to tweet.
 	manuscript = ObjDict()
 	manuscript.acts = []
 
 	# Act 0 
-	manuscript.acts.append(["Here's a folk story."])
+	manuscript.acts.append(["Here's another folk story."])
 	
 	# Act 1
 	manuscript.acts.append([]) # Add act 1
-	manuscript.acts[1].append(p.name + " the " + p.identity + " often felt " + p.startingVirtueMood + ", but sometimes felt " + p.startingFlawMood + ".")
+	manuscript.acts[1].append(p.name + " was " + aan(p.virtue) + " but " + p.vice + " " + p.identity.title() + ".")
+	manuscript.acts[1].append("Like all the animals, " + p.name + " lived under the tyranny of " + v.name + " the " + v.virtue.capitalize() + " " + v.identity.title() + ".")
 	
 	# Act 2
 	manuscript.acts.append([]) # Add act 2
-	manuscript.acts[2].append("One day " + p.name + " met " + m.name + " the " + m.identity + ".")
+	manuscript.acts[2].append("One day, " + m.name + " the " + m.identity.title() + " asked for " + p.name + "'s help to rid them of " + v.name + ".")
+	manuscript.acts[2].append(p.name + " agreed, and together they learned that " + v.name + " was prone to being " + v.vice + "." )
 	
 	# Act 3
 	manuscript.acts.append([])
 	
-	if (narrative.form == "Heroic"):
-		manuscript.acts[3].append("They went on an adventure and " + p.name + " learned to feel more " +  p.learnedVirtueMood + ", and never felt " + p.startingFlawMood + " again.")
-	elif (narrative.form == "Tragic"):
-		manuscript.acts[3].append("They went on an adventure, but " + p.name + " acted really " + p.startingFlawMood + " and this led to " + p.name + "'s downfall.")
+	if (narrative.form == "heroic"):
+		manuscript.acts[3].append("By the time they finally met, " + p.name + " had learned to be more " + p.lackingVirtueKey + ", and played on " + v.name + "'s " + v.vice + " side.")
+		manuscript.acts[3].append(v.name + " was vanquished, and the animals lived happily ever after.")
+	elif (narrative.form == "tragic"):
+		manuscript.acts[3].append("When they finally met, the " + v.identity + " " + v.name + " was feeling particularly " + v.virtue + ", and " + p.name + " could not help but be " + p.vice + ".")
+		manuscript.acts[3].append(p.name + " was defeated, and " + m.name + " fled to seek a true hero. The end... or is it?")
 	else:
 		logger.error("No third act!")
 		manusript.acts[3].append("... the end, I guess?")
@@ -216,75 +259,75 @@ def tweet(output):
 	status = python_twitter.PostUpdate(output)
 	logger.info("Tweeted; status = " + str(status))
 #
+
+def aan(s):
+	if s[0] in "aeiouAEIOU":
+		return ("an " + s)
+	else:
+		return ("a " + s)
+
 	
 # Configure this in lambda as the handler that Lambda will invoke
+## Here's an example production event
+"""
+{
+    "version": "0",
+    "id": "a97774b7-252a-4905-8970-ce7d09ab32e1",
+    "detail-type": "Scheduled Event",
+    "source": "aws.events",
+    "account": "533996033834",
+    "time": "2018-11-27T10:07:56Z",
+    "region": "us-east-1",
+    "resources": [
+        "arn:aws:events:us-east-1:533996033834:rule/pybotSPAM"
+    ],
+    "detail": {}
+}
+"""
+# Here's my new test event
+"""
+{
+  "version": "0",
+  "detail-type": "Custom Test Event",
+  "account": "533996033834",
+  "region": "us-east-1",
+  "detail": {}
+}
+"""
+
 def lambda_handler(event, _context):
-	logger.info("Running lambda_handler() with event \n" + str(event) + "\n and context \n" + str(_context))
+	logger.info("Running lambda_handler()")
+	
+	try:
+		logger.info("event = " + event)
+	except:
+		logger.info("Event isn't natively loggable")
+		
+	logger.info("str(event) = " + str(event))		
 	
 	logger.info("json.dumps(event) = " + json.dumps(event))
 	
 	try:
-		if (event["testing"] == "True"):
-			logger.info("Invoking main('Lambda Testing')")
+		if (event["detail-type"] == "Scheduled Event"):
+			logger.info("event['detail-type'] == 'Scheduled Event'; Invoking main('Lambda Production')")
+			main("Lambda Production")
+		elif (event["detail-type"]  == "Custom Test Event"):
+			logger.info("event['detail-type'] == 'Custom Test Event'; Invoking main('Lambda Testing')")
 			main("Lambda Testing")
 		else:
-			logger.warn("Testing is findable but not what we expected")
+			logger.error("Unexpected event JSON! Not invoking main()")
+	except Exception:
+		logger.error("str(Exception) " + str(Exception) + "whilst looking for event['detail-type']! Not invoking main()")
 	except:
-		try:
-			if (event["detail-type"] == "Scheduled Event"):
-				logger.warn("Lambda event is as expected, invoking main('Lambda Production')")
-				main("Lambda Production")
-		except:
-			logger.error("Exception while looking for event['detail-type']")
-		
+		logger.error("Unidentified Exception whilst looking for event['detail-type']! Not invoking main()")
 		
 	logger.info("End of lambda execution")
-#
-
-# Shorthand for turning a Python Object to JSON
-def printObj(o):
-	print(json.dumps(o, default=lambda o: getattr(o, '__dict__', str(o))))	
-#
-	
-def testCFG():
-	logger.error("I haven't imported NLTK because it's big")
-	grammar = CFG.fromstring("""S -> NP VP
-    NP -> Det N
-    PP -> P NP
-    VP -> 'slept'
-    VP -> 'saw' NP
-    VP -> 'walked' PP
-    Det -> 'the'
-    Det -> 'a'
-    N -> 'man'
-    N -> 'park'
-    N -> 'dog'
-    P -> 'in'
-    P -> 'with'""")
-	
-	sentences = generate(grammar, n=2)
-		
-	logger.warn("Here are some sample CFG-generated sentences")
-	
-	for sentence in sentences:
-		logger.info(">" + str(sentence))
 #
 	
 # Detect 'standalone execution' and run main() if so
 logger.info("Checking for __main__ execution")
 if __name__ == "__main__":
 	logger.info("__name__ is __main__")
-	
-	event = json.loads('{"testing": "True"}')
-	
-	logger.info("event: " + json.dumps(event))
-	
-	if (event["testing"] == "True"):
-		logger.info("event['testing'] is True")
-	else:
-		logger.info("event['testing'] is not True")
-		
-	localRun = True
 	main("Local")
 	logger.info("End of local execution")
 # This has to be the last thing...

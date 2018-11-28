@@ -1,0 +1,877 @@
+{
+	"active":
+	{
+	   "name": "active",
+	   "opposite": "inactive",
+	   "heroism": "tireless",
+	   "villainy": "relentless",
+	   "indulgence": "slothful",
+	   "moods": 
+	   [
+		  {
+			 "bad": "idle",
+			 "good": "active"
+		  },
+		  {
+			 "bad": "complacent",
+			 "good": "alert"
+		  },
+		  {
+			 "bad": "inattentive",
+			 "good": "attentive"
+		  },
+		  {
+			 "bad": "blank",
+			 "good": "awake"
+		  },
+		  {
+			 "bad": "apathetic",
+			 "good": "aware"
+		  },
+		  {
+			 "bad": "indifferent",
+			 "good": "caring"
+		  },
+		  {
+			 "bad": "uncommitted",
+			 "good": "committed"
+		  },
+		  {
+			 "bad": "thoughtless",
+			 "good": "contemplative"
+		  },
+		  {
+			 "bad": "indecisive",
+			 "good": "decisive"
+		  },
+		  {
+			 "bad": "unconscientious",
+			 "good": "dedicated"
+		  },
+		  {
+			 "bad": "apathetic",
+			 "good": "determined"
+		  },
+		  {
+			 "bad": "bored",
+			 "good": "eager"
+		  },
+		  {
+			 "bad": "idle",
+			 "good": "energetic"
+		  },
+		  {
+			 "bad": "fatigued",
+			 "good": "energetic"
+		  },
+		  {
+			 "bad": "lethargic",
+			 "good": "energetic"
+		  },
+		  {
+			 "bad": "idle",
+			 "good": "energized"
+		  },
+		  {
+			 "bad": "detached",
+			 "good": "engaged"
+		  },
+		  {
+			 "bad": "distant",
+			 "good": "engaged"
+		  },
+		  {
+			 "bad": "dim",
+			 "good": "enlightened"
+		  },
+		  {
+			 "bad": "disinterested",
+			 "good": "enthralled"
+		  },
+		  {
+			 "bad": "apathetic",
+			 "good": "enthusiastic"
+		  },
+		  {
+			 "bad": "absent minded",
+			 "good": "focussed"
+		  },
+		  {
+			 "bad": "distracted",
+			 "good": "focussed"
+		  },
+		  {
+			 "bad": "vacant",
+			 "good": "focussed"
+		  },
+		  {
+			 "bad": "lazy",
+			 "good": "hard-working"
+		  },
+		  {
+			 "bad": "lazy",
+			 "good": "industrious"
+		  },
+		  {
+			 "bad": "bored",
+			 "good": "interested"
+		  },
+		  {
+			 "bad": "uninvolved",
+			 "good": "involved"
+		  },
+		  {
+			 "bad": "ignorant",
+			 "good": "knowledgeable"
+		  },
+		  {
+			 "bad": "listless",
+			 "good": "lively"
+		  },
+		  {
+			 "bad": "sluggish",
+			 "good": "lively"
+		  },
+		  {
+			 "bad": "idle",
+			 "good": "motivated"
+		  },
+		  {
+			 "bad": "stubborn",
+			 "good": "obliging"
+		  },
+		  {
+			 "bad": "disorganized",
+			 "good": "organised"
+		  },
+		  {
+			 "bad": "apathetic",
+			 "good": "passionate"
+		  },
+		  {
+			 "bad": "sullen",
+			 "good": "playful"
+		  },
+		  {
+			 "bad": "ditzy",
+			 "good": "practical"
+		  },
+		  {
+			 "bad": "lazy",
+			 "good": "productive"
+		  },
+		  {
+			 "bad": "ditzy",
+			 "good": "realistic"
+		  },
+		  {
+			 "bad": "helpless",
+			 "good": "resourceful"
+		  },
+		  {
+			 "bad": "helpless",
+			 "good": "self-reliant"
+		  },
+		  {
+			 "bad": "slapdash",
+			 "good": "skillful"
+		  },
+		  {
+			 "bad": "uncommitted",
+			 "good": "tenacious"
+		  },
+		  {
+			 "bad": "profligate",
+			 "good": "thrifty"
+		  },
+		  {
+			 "bad": "idle",
+			 "good": "vigorous"
+		  },
+		  {
+			 "bad": "dull",
+			 "good": "whimsical"
+		  }
+		]
+	},
+	"confident": {
+		"name": "confident",
+		"opposite": "cowardly",
+		"heroism": "brave",
+		"villainy": "fearless",
+		"indulgence": "cowardly",
+		"moods": [
+			  {
+				 "bad": "timid",
+				 "good": "bold"
+			  },
+			  {
+				 "bad": "scared",
+				 "good": "brave"
+			  },
+			  {
+				 "bad": "cowardly",
+				 "good": "courageous"
+			  },
+			  {
+				 "bad": "hesitant",
+				 "good": "daring"
+			  },
+			  {
+				 "bad": "ugly",
+				 "good": "attractive"
+			  },
+			  {
+				 "bad": "afraid",
+				 "good": "brave"
+			  },
+			  {
+				 "bad": "cowardly",
+				 "good": "brave"
+			  },
+			  {
+				 "bad": "scared",
+				 "good": "brave"
+			  },
+			  {
+				 "bad": "anxious",
+				 "good": "calm"
+			  },
+			  {
+				 "bad": "agitated",
+				 "good": "calm"
+			  },
+			  {
+				 "bad": "alarmed",
+				 "good": "calm"
+			  },
+			  {
+				 "bad": "shameful",
+				 "good": "confident"
+			  },
+			  {
+				 "bad": "greedy",
+				 "good": "content"
+			  },
+			  {
+				 "bad": "discouraged",
+				 "good": "encouraged"
+			  },
+			  {
+				 "bad": "fearful",
+				 "good": "fearless"
+			  },
+			  {
+				 "bad": "defensive",
+				 "good": "open"
+			  },
+			  {
+				 "bad": "self-doubting",
+				 "good": "self-confident"
+			  },
+			  {
+				 "bad": "unlovable",
+				 "good": "sexy"
+			  },
+			  {
+				 "bad": "helpless",
+				 "good": "strong"
+			  }
+		  ]
+	},
+	"kind": {
+		"name": "kind",
+		"opposite": "selfish",
+		"heroism": "self-sacrificial",
+		"villainy": "seductive",
+		"indulgence": "greedy",
+		"moods": [
+			{
+			 "bad": "contemptuous",
+			 "good": "admiring"
+			},
+			{
+			 "bad": "aloof",
+			 "good": "affectionate"
+			},
+			{
+			 "bad": "arrogant",
+			 "good": "apologetic"
+			},
+			{
+			 "bad": "unappreciative",
+			 "good": "appreciative"
+			},
+			{
+			 "bad": "selfish",
+			 "good": "benevolent"
+			},
+			{
+			 "bad": "malicious",
+			 "good": "benevolent"
+			},
+			{
+			 "bad": "uncaring",
+			 "good": "caring"
+			},
+			{
+			 "bad": "antagonistic",
+			 "good": "collaborative"
+			},
+			{
+			 "bad": "unkind",
+			 "good": "compassionate"
+			},
+			{
+			 "bad": "inconsiderate",
+			 "good": "considerate"
+			},
+			{
+			 "bad": "uncaring",
+			 "good": "devoted"
+			},
+			{
+			 "bad": "insincere",
+			 "good": "earnest"
+			},
+			{
+			 "bad": "self-centred",
+			 "good": "empathetic"
+			},
+			{
+			 "bad": "disdainful",
+			 "good": "encouraging"
+			},
+			{
+			 "bad": "mocking",
+			 "good": "encouraging"
+			},
+			{
+			 "bad": "unforgiving",
+			 "good": "forgiving"
+			},
+			{
+			 "bad": "accusatory",
+			 "good": "forgiving"
+			},
+			{
+			 "bad": "judgmental",
+			 "good": "forgiving"
+			},
+			{
+			 "bad": "unfriendly",
+			 "good": "friendly"
+			},
+			{
+			 "bad": "aloof",
+			 "good": "friendly"
+			},
+			{
+			 "bad": "hostile",
+			 "good": "friendly"
+			},
+			{
+			 "bad": "selfish",
+			 "good": "generous"
+			},
+			{
+			 "bad": "possessive",
+			 "good": "generous"
+			},
+			{
+			 "bad": "stingy",
+			 "good": "generous"
+			},
+			{
+			 "bad": "cruel",
+			 "good": "gentle"
+			},
+			{
+			 "bad": "aggressive",
+			 "good": "gentle"
+			},
+			{
+			 "bad": "caustic",
+			 "good": "gentle"
+			},
+			{
+			 "bad": "vicious",
+			 "good": "gentle"
+			},
+			{
+			 "bad": "selfish",
+			 "good": "giving"
+			},
+			{
+			 "bad": "ungrateful",
+			 "good": "grateful"
+			},
+			{
+			 "bad": "unhelpful",
+			 "good": "helpful"
+			},
+			{
+			 "bad": "devious",
+			 "good": "honest"
+			},
+			{
+			 "bad": "dishonest",
+			 "good": "honest"
+			},
+			{
+			 "bad": "inhospitable",
+			 "good": "hospitable"
+			},
+			{
+			 "bad": "superior",
+			 "good": "humble"
+			},
+			{
+			 "bad": "uninclusive",
+			 "good": "inclusive"
+			},
+			{
+			 "bad": "unjust",
+			 "good": "just"
+			},
+			{
+			 "bad": "unkind",
+			 "good": "kind"
+			},
+			{
+			 "bad": "angry",
+			 "good": "kind"
+			},
+			{
+			 "bad": "bitchy",
+			 "good": "kind"
+			},
+			{
+			 "bad": "mean",
+			 "good": "kind"
+			},
+			{
+			 "bad": "callous",
+			 "good": "kindly"
+			},
+			{
+			 "bad": "spiteful",
+			 "good": "kindly"
+			},
+			{
+			 "bad": "cold",
+			 "good": "loving"
+			},
+			{
+			 "bad": "hateful",
+			 "good": "loving"
+			},
+			{
+			 "bad": "merciless",
+			 "good": "merciful"
+			},
+			{
+			 "bad": "nasty",
+			 "good": "nice"
+			},
+			{
+			 "bad": "aggressive",
+			 "good": "peaceful"
+			},
+			{
+			 "bad": "uncaring",
+			 "good": "protective"
+			},
+			{
+			 "bad": "impertinent",
+			 "good": "respectful"
+			},
+			{
+			 "bad": "patronizing",
+			 "good": "respectful"
+			},
+			{
+			 "bad": "cold",
+			 "good": "romantic"
+			},
+			{
+			 "bad": "pushy",
+			 "good": "selfless"
+			},
+			{
+			 "bad": "selfish",
+			 "good": "selfless"
+			},
+			{
+			 "bad": "insensitive",
+			 "good": "sensitive"
+			},
+			{
+			 "bad": "insensitive",
+			 "good": "sensitive"
+			},
+			{
+			 "bad": "insincere",
+			 "good": "sincere"
+			},
+			{
+			 "bad": "critical",
+			 "good": "supportive"
+			},
+			{
+			 "bad": "derisive",
+			 "good": "supportive"
+			},
+			{
+			 "bad": "unsympathetic",
+			 "good": "sympathetic"
+			},
+			{
+			 "bad": "tactless",
+			 "good": "tactful"
+			},
+			{
+			 "bad": "harsh",
+			 "good": "tender"
+			},
+			{
+			 "bad": "thankless",
+			 "good": "thankful"
+			},
+			{
+			 "bad": "thoughtless",
+			 "good": "thoughtful"
+			},
+			{
+			 "bad": "self-centered",
+			 "good": "thoughtful"
+			},
+			{
+			 "bad": "coldhearted",
+			 "good": "warmhearted"
+			},
+			{
+			 "bad": "unwelcoming",
+			 "good": "welcoming"
+			}
+		]
+	},
+	"positive": {
+		"name": "positive",
+		"opposite": "negative",
+		"heroism": "undespairing",
+		"villainy": "fanatical",
+		"indulgence": "rageful",		
+		"moods": [
+		  {
+			 "bad": "annoyed",
+			 "good": "blissful"
+		  },
+		  {
+			 "bad": "anxious",
+			 "good": "calm"
+		  },
+		  {
+			 "bad": "infuriated",
+			 "good": "calm"
+		  },
+		  {
+			 "bad": "irked",
+			 "good": "calm"
+		  },
+		  {
+			 "bad": "grumpy",
+			 "good": "cheerful"
+		  },
+		  {
+			 "bad": "sullen",
+			 "good": "cheery"
+		  },
+		  {
+			 "bad": "grumpy",
+			 "good": "chipper"
+		  },
+		  {
+			 "bad": "apathetic",
+			 "good": "curious"
+		  },
+		  {
+			 "bad": "jaded",
+			 "good": "enthusiastic"
+		  },
+		  {
+			 "bad": "disloyal",
+			 "good": "faithful"
+		  },
+		  {
+			 "bad": "indignant",
+			 "good": "forgiving"
+		  },
+		  {
+			 "bad": "resentful",
+			 "good": "forgiving"
+		  },
+		  {
+			 "bad": "revengeful",
+			 "good": "forgiving"
+		  },
+		  {
+			 "bad": "naughty",
+			 "good": "good"
+		  },
+		  {
+			 "bad": "sinful",
+			 "good": "good"
+		  },
+		  {
+			 "bad": "phony",
+			 "good": "honest"
+		  },
+		  {
+			 "bad": "hopeless",
+			 "good": "hopeful"
+		  },
+		  {
+			 "bad": "cynical",
+			 "good": "idealistic"
+		  },
+		  {
+			 "bad": "brooding",
+			 "good": "interested"
+		  },
+		  {
+			 "bad": "harsh",
+			 "good": "jolly"
+		  },
+		  {
+			 "bad": "harsh",
+			 "good": "jovial"
+		  },
+		  {
+			 "bad": "conceited",
+			 "good": "modest"
+		  },
+		  {
+			 "bad": "pessimistic",
+			 "good": "optimistic"
+		  },
+		  {
+			 "bad": "fatalistic",
+			 "good": "optimistic"
+		  },
+		  {
+			 "bad": "pessimistic",
+			 "good": "optimistic"
+		  },
+		  {
+			 "bad": "cold",
+			 "good": "passionate"
+		  },
+		  {
+			 "bad": "impatient",
+			 "good": "patient"
+		  },
+		  {
+			 "bad": "irritated",
+			 "good": "patient"
+		  },
+		  {
+			 "bad": "unpleasant",
+			 "good": "pleasant"
+		  },
+		  {
+			 "bad": "negative",
+			 "good": "positive"
+		  },
+		  {
+			 "bad": "bitter",
+			 "good": "positive"
+		  },
+		  {
+			 "bad": "cranky",
+			 "good": "positive"
+		  },
+		  {
+			 "bad": "cross",
+			 "good": "positive"
+		  },
+		  {
+			 "bad": "negative",
+			 "good": "positive"
+		  },
+		  {
+			 "bad": "ornery",
+			 "good": "positive"
+		  },
+		  {
+			 "bad": "grouchy",
+			 "good": "positive"
+		  },
+		  {
+			 "bad": "vapid",
+			 "good": "reflective"
+		  },
+		  {
+			 "bad": "disrespectful",
+			 "good": "reverent"
+		  },
+		  {
+			 "bad": "envious",
+			 "good": "satisfied"
+		  },
+		  {
+			 "bad": "cold",
+			 "good": "sentimental"
+		  },
+		  {
+			 "bad": "cynical",
+			 "good": "supportive"
+		  },
+		  {
+			 "bad": "tasteless",
+			 "good": "tasteful"
+		  },
+		  {
+			 "bad": "annoyed",
+			 "good": "tolerant"
+		  },
+		  {
+			 "bad": "peeved",
+			 "good": "tolerant"
+		  },
+		  {
+			 "bad": "skeptical",
+			 "good": "trusting"
+		  },
+		  {
+			 "bad": "cold",
+			 "good": "vivacious"
+		  },
+		  {
+			 "bad": "cold",
+			 "good": "vivid"
+		  },
+		  {
+			 "bad": "grumpy",
+			 "good": "cheerful"
+		  }
+	   ]
+	},
+	"wise": {
+		"name": "wise",
+		"opposite": "foolish",
+		"heroism": "unflappable",
+		"villainy": "calculating",
+		"indulgence": "irrational",
+		"moods": [
+		  {
+			 "bad": "haughty",
+			 "good": "approachable"
+		  },
+		  {
+			 "bad": "petty",
+			 "good": "big-hearted"
+		  },
+		  {
+			 "bad": "enraged",
+			 "good": "calm"
+		  },
+		  {
+			 "bad": "hysterical",
+			 "good": "calm"
+		  },
+		  {
+			 "bad": "incensed",
+			 "good": "calm"
+		  },
+		  {
+			 "bad": "irate",
+			 "good": "calm"
+		  },
+		  {
+			 "bad": "careless",
+			 "good": "careful"
+		  },
+		  {
+			 "bad": "undignified",
+			 "good": "dignified"
+		  },
+		  {
+			 "bad": "choleric",
+			 "good": "friendly"
+		  },
+		  {
+			 "bad": "violent",
+			 "good": "gentle"
+		  },
+		  {
+			 "bad": "arrogant",
+			 "good": "humble"
+		  },
+		  {
+			 "bad": "childish",
+			 "good": "mature"
+		  },
+		  {
+			 "bad": "frantic",
+			 "good": "methodical"
+		  },
+		  {
+			 "bad": "furious",
+			 "good": "patient"
+		  },
+		  {
+			 "bad": "impatient",
+			 "good": "patient"
+		  },
+		  {
+			 "bad": "warlike",
+			 "good": "peaceful"
+		  },
+		  {
+			 "bad": "irresponsible",
+			 "good": "responsible"
+		  },
+		  {
+			 "bad": "irresponsible",
+			 "good": "responsible"
+		  },
+		  {
+			 "bad": "needy",
+			 "good": "self-reliant"
+		  },
+		  {
+			 "bad": "self-destructive",
+			 "good": "self-respecting"
+		  },
+		  {
+			 "bad": "reckless",
+			 "good": "sensible"
+		  },
+		  {
+			 "bad": "silly",
+			 "good": "sensible"
+		  },
+		  {
+			 "bad": "agitated",
+			 "good": "serene"
+		  },
+		  {
+			 "bad": "jumpy",
+			 "good": "steady"
+		  },
+		  {
+			 "bad": "impulsive",
+			 "good": "thoughtful"
+		  },
+		  {
+			 "bad": "irrational",
+			 "good": "thoughtful"
+		  },
+		  {
+			 "bad": "loud",
+			 "good": "tranquil"
+		  }
+		]
+	}
+}
