@@ -39,17 +39,30 @@ def main(environment):
 	logger.info(" ------- main() running in " + environment + " environment -------")
 	## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 	
-	okToTweet = False; # If in doubt, don't tweet.
+	# Set defaults
+	okToTweet = False # If in doubt, don't tweet.
+	offline = False # Assume you are online
+	
+	# Handle arguments
 
+	logger.info("Arguments: " + str(sys.argv))
+	
+	for arg in sys.argv:
+		if (arg == "--offline" or arg == "-o"):
+			offline = True
+			
 	# S3 not in use (it's not always-free-tier)
 	# s3 = boto3.resource('s3') # Boto will automatically get credentials from the filesystem (running locally) or the function's user account (lambda)	
 	# s3ManuscriptOrNone = getManuscriptOrNoneFromS3(s3)
 	# logger.info("s3 manu = " + str(s3ManuscriptOrNone))
 	
 	# Get Manuscript from dynamo (if there is one)															
-	dynamodb = boto3.resource('dynamodb', region_name='us-east-1')											
-	dynamoManuscriptOrNone = getManuscriptOrNoneFromDynamo(dynamodb)										
-	logger.info("fetched dynamo manuscript = " + str(dynamoManuscriptOrNone))								
+	if (offline):
+		dynamoManuscriptOrNone = None
+	else:
+		dynamodb = boto3.resource('dynamodb', region_name='us-east-1')											
+		dynamoManuscriptOrNone = getManuscriptOrNoneFromDynamo(dynamodb)										
+		logger.info("fetched dynamo manuscript = " + str(dynamoManuscriptOrNone))								
 																											
 	if dynamoManuscriptOrNone == None:																		
 		# Write a new story before proceeding																
@@ -61,7 +74,7 @@ def main(environment):
 	else:																									
 		manuscript = dynamoManuscriptOrNone																	
 																											
-	# Tweet what we can then update the DB																	
+	# Build an intended output and work out what remains
 	outputAndRemainer = chooseOutputAndRemainer(manuscript)													
 																											
 	output = outputAndRemainer["output"]																	
@@ -69,26 +82,35 @@ def main(environment):
 																											
 	logger.info("output = " + str(output))																	
 	logger.info("remainer = " + str(remainer))																
-																											
+														
+
+	# Check whether this intended output is OK to Tweet
 	okToTweet = isOkToTweet(environment, output)															
-																										
-	if (okToTweet):																							
-		logger.warning("Tweeting")
-		tweet(output)
-	else:																									
-		logger.info("Not invoking tweet()") 																
-		
-	if (len(remainer) > 0):
-		logger.info("Saving remainer")
-		
-		newManuscript = {}
-		newManuscript["previous"] = manuscript["previous"] + 1
-		newManuscript["text"] = remainer
-		
-		saveManuscriptToDynamoDB(newManuscript, dynamodb)
-	else:
-		logger.info("No remainer; deleting manuscript!")
-		deleteManuscriptFromDynamoDB(dynamodb)
+	
+	lastTweetId = None
+	
+	if not offline:
+		# Tweet or set status to None
+		if (okToTweet):																							
+			logger.warning("Tweeting")
+			tweetStatus = tweetAndGetStatus(output)
+			if (tweetStatus != None):
+				lastTweetId = tweetStatus["Id"]
+		else:																									
+			logger.info("Not invoking tweet()")
+			
+		# Update records
+		if (len(remainer) > 0):
+			logger.info("Saving remainer")
+			
+			newManuscript = {}
+			newManuscript["previous"] = manuscript["previous"] + 1
+			newManuscript["text"] = remainer
+			
+			saveManuscriptAndIdToDynamoDB(newManuscript, lastTweetId, dynamodb)
+		else:
+			logger.info("No remainer; deleting manuscript!")
+			deleteManuscriptFromDynamoDB(dynamodb)
 		
 #
 	
@@ -155,6 +177,18 @@ def buildNarrative(corpora):
 	n.villain = v
 	n.mentor = m
 	
+	## BUILD BEATS
+	
+	beatsDB = []
+	
+#	b = {}
+#	b["if"] = ["character a is kind", "need show-personality scene for a"] 
+#	b["then"] = ["spawn or recall character b nonhostile to a", "complete act-of-kindness-template from a to b"]
+#	
+#	b2 = {}
+#	b2["if"] = ["NEED act-of-kindness scene from x to y"]
+#	b2["then"] = ["DEPICT y in need", "DEPICT x ..."	
+	
 	logger.info("str(narrative) = " + str(n))
 	
 	return n;
@@ -169,7 +203,8 @@ def getManuscriptOrNoneFromS3(s3):
 		else:
 			raise
 	except Exception as ee:
-		logger.error("Unexpected exception: " + str(ee))
+		logger.error("Unexpected exception getting from S3: " + str(ee))
+		raise
 	
 def getManuscriptOrNoneFromDynamo(dynamodb):
 	logger.info("getManuscriptOrNoneFromDynamo() running...")
@@ -191,9 +226,11 @@ def getManuscriptOrNoneFromDynamo(dynamodb):
 			return None
 		
 		return manuscript
-	
+	except botocore.exceptions.EndpointExceptionError as eee:
+		logger.error("EndpointExceptionError getting from dynamoDB: " + str(eee))
+		return None
 	except Exception as ee:
-		logger.error("Unexpected exception accessing dynamoDB!")
+		logger.error("Unexpected exception getting from dynamoDB: " + str(ee) )
 		raise
 
 def createManuscript(narrative, corpora):
@@ -257,21 +294,32 @@ def saveManuscriptToS3(manuscript, s3):
 	except:
 		logger.error("Exception while trying to write to s3 :(")
 	
-def saveManuscriptToDynamoDB(manuscript, dynamodb):
+def saveManuscriptAndIdToDynamoDB(manuscript, lastTweetId, dynamodb):
 	logger.info("saveManuscriptToDynamoDB() running...")
 	
 	try:
 		table = dynamodb.Table('storypybotmike')
 		
-		response = table.put_item(
+		response1 = table.put_item(
 			Item={
 				'myPartitionKey': 'Manuscript',
 				'myJson': json.dumps(manuscript)
 			}
 		)
+		
+		if (lastTweetId != None):
+			lastTweetId = "Dummy!"
+			logger.critical("WRITING DUMMY lastTweetId!")
+			
+		response2 = table.put_item(
+			Item={
+				'myPartitionKey': 'lastTweetId',
+				'myJson': json.dumps(lastTweetId)
+			}
+		)
 
 	except Exception as ee:
-		logger.error("Unexpected exception " + str(ee))
+		logger.error("Unexpected exception saving to DB " + str(ee))
 		raise
 		
 	## ## ## ## ## ## ## ## ! ! ! ! ! ! ! !
@@ -284,7 +332,7 @@ def deleteManuscriptFromDynamoDB(dynamodb):
 	
 		response = table.delete_item(Key={'myPartitionKey': 'Manuscript'})
 	except Exception as ee:
-		logger.error("Unexpected exception " + str(ee))
+		logger.error("Unexpected exception deleting from DB " + str(ee))
 		raise
 
 def chooseOutputAndRemainer(manuscript):
@@ -355,8 +403,8 @@ def isOkToTweet(environment, output):
 		
 	return ok
 
-def tweet(output):
-	logger.info("tweet() running...")
+def tweetAndGetId(output):
+	logger.info("tweetAndGetStatus() running...")
 	# Load twitter credentials from file into an object
 	try:
 		with open('SECRET/twitterCredentials.json') as twitterCredFile:
@@ -369,10 +417,17 @@ def tweet(output):
 	# Log into Twitter
 	# "**" expands credentials object into parameters
 	logger.info("Logging into Twitter")
-	python_twitter = twitter.Api(**twitterCredentials)
-	# Use the API
-	status = python_twitter.PostUpdate(output)
-	logger.info("Tweeted; status = " + str(status))
+	
+	try:
+		python_twitter = twitter.Api(**twitterCredentials)
+		# Use the API
+		status = python_twitter.PostUpdate(output)
+		# Store the id tweeted
+		logger.info("Tweeted; status = " + str(status))
+		return status
+	except Exception as ee:
+		logger.error("Exception while attempting to tweet: " + str(ee))
+		raise
 #
 
 def aan(s):
@@ -381,7 +436,18 @@ def aan(s):
 	else:
 		return ("a " + s)
 
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## PLOTTER ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+
+class Plotter:
+	def generatePlot:
+		plot["scenes"] = []
+		plot["scenes"].append({"purpose": "introduce-protagonist"})
+		plot["scenes"].append({"purpose": "inciting-incident"})
+		plot["scenes"].append({"purpose": "protagonist-learns"})
+		plot["scenes"].append({"purpose": "resolve-climax"})
 	
+	
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## EXECUTION HOOKS ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##  
 # Configure this in lambda as the handler that Lambda will invoke
 ## Here's an example production event
 """
@@ -424,17 +490,21 @@ def lambda_handler(event, _context):
 	
 	try:
 		if (event["detail-type"] == "Scheduled Event"):
-			logger.info("event['detail-type'] == 'Scheduled Event'; Invoking main('Lambda Production')")
-			main("Lambda Production")
+			env = "Lambda Production"
+			logger.info("event['detail-type'] == 'Scheduled Event'")
 		elif (event["detail-type"]  == "Custom Test Event"):
-			logger.info("event['detail-type'] == 'Custom Test Event'; Invoking main('Lambda Testing')")
-			main("Lambda Testing")
+			env = "Lambda Testing"
+			logger.info("event['detail-type'] == 'Custom Test Event'")
 		else:
+			env = None
 			logger.error("Unexpected event JSON! Not invoking main()")
-	except Exception:
-		logger.error("str(Exception) " + str(Exception) + "whilst looking for event['detail-type']! Not invoking main()")
-	except:
-		logger.error("Unidentified Exception whilst looking for event['detail-type']! Not invoking main()")
+	except Exception as ee:
+		logger.error("Unidentified Exception whilst looking for event['detail-type']!")
+		
+	if (env == None):
+		logger.info("Not invoking main()")
+	else:
+		main(env)
 		
 	logger.info("End of lambda execution")
 #
@@ -446,3 +516,41 @@ if __name__ == "__main__":
 	main("Local")
 	logger.info("End of local execution")
 # This has to be the last thing...
+
+## Design Notes
+
+# Currently we have: 
+# 	Establish protagonist's characters			
+# 		Describe it!
+#	Incite
+#		(Introduce Mentor)
+# 	Climax
+#		Explain victory/defeat using vices/virtues
+
+# Epic "Show don't tell"
+# 	(Micro) acts that demonstrate a character's personality so we show not tell
+#		Each act might arbitrarily be alone or an interaction
+# 			It might be worth introducing plotting for minor characters pretty EARLY to avoid unreadable procgen noise
+# 			What about if during story gen the need for certain roles (protagonist-helper, protagonist-helpee, protagonist-negotiator) caused those characters to be spawned
+# 			A mid level implementation would be narrative.cast.mentor = narrative.cast.wooee etc. 
+# 			But would an Elan style database of facts be more scalable
+
+# Use a:
+#	Hash-partitioned (i.e. choose universal, mutually exclusive terms like what country you're in)
+#	Semantically hierarchical (i.e. choose choose 
+# 	locally sorted database
+# 	optimise state->rule comparison (alphabetical)
+
+# But I don't want to prematurely optimise!
+
+# 	best approach would be: naive implementation that can be optimised for speed if and when it becomes necessary
+
+# 	Naive implementation is a simple brute search.
+
+# 	 the system's total knowledge would be a universe from which a searchable DB for the story would be instantiated at universe gen time 
+#		tbc whether to serialise the DB or serialise the seeds and regen each time.
+
+# I'd need a pretty abstract representation - Elan's was snatches of speech, successor event rules, parameters...
+
+# Maybe I could do it in NATURAL LANGUAGE first then invent a better encoding.
+
