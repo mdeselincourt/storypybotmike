@@ -7,7 +7,8 @@ import random
 import os # Helps me import files
 from objdict import ObjDict # Helps me treat Python as if it's JavaScript haha
 from botocore.exceptions import ClientError
-import sys
+import sys # used to get command line arguments for local testing
+import inspect # used to clarify logging
 
 # Don't forget to install these with pip -t . so they go in the repo and can be deployed to AWS
 
@@ -61,7 +62,7 @@ def main(environment):
 		dynamoManuscriptOrNone = None
 	else:
 		dynamodb = boto3.resource('dynamodb', region_name='us-east-1')											
-		dynamoManuscriptOrNone = getManuscriptOrNoneFromDynamo(dynamodb)										
+		dynamoManuscriptOrNone = getManuscriptOrNoneFromDynamo(dynamodb, environment)										
 		logger.info("fetched dynamo manuscript = " + str(dynamoManuscriptOrNone))								
 																											
 	if dynamoManuscriptOrNone == None:																		
@@ -107,10 +108,10 @@ def main(environment):
 			newManuscript["previous"] = manuscript["previous"] + 1
 			newManuscript["text"] = remainer
 			
-			saveManuscriptAndIdToDynamoDB(newManuscript, lastTweetId, dynamodb)
+			saveManuscriptAndIdToDynamoDB(newManuscript, lastTweetId, dynamodb, environment)
 		else:
 			logger.info("No remainer; deleting manuscript!")
-			deleteManuscriptFromDynamoDB(dynamodb)
+			deleteManuscriptFromDynamoDB(dynamodb, environment)
 		
 #
 	
@@ -206,20 +207,20 @@ def getManuscriptOrNoneFromS3(s3):
 		logger.error("Unexpected exception getting from S3: " + str(ee))
 		raise
 	
-def getManuscriptOrNoneFromDynamo(dynamodb):
+def getManuscriptOrNoneFromDynamo(dynamodb, env):
 	logger.info("getManuscriptOrNoneFromDynamo() running...")
 	
 	try:
 		table = dynamodb.Table('storypybotmike')
-		
+		logger.info("-Getting myPartitionKey " + env + 'Manuscript' + " from storypybotmike") 
 		response = table.get_item(
 			Key={
-				'myPartitionKey': 'Manuscript'
+				'myPartitionKey': env + 'Manuscript'
 			}
 		)
 		
 		try:
-			#logger.info("Response['Item'] = " + str(response["Item"]))
+			logger.info("Response['Item'] = " + str(response["Item"]))
 			manuscript = json.loads(response['Item']['myJson'])
 		except KeyError:
 			#logger.info("Expected exception: KeyError => no stored manuscript")
@@ -231,6 +232,7 @@ def getManuscriptOrNoneFromDynamo(dynamodb):
 		return None
 	except Exception as ee:
 		logger.error("Unexpected exception getting from dynamoDB: " + str(ee) )
+		env = None
 		raise
 
 def createManuscript(narrative, corpora):
@@ -258,25 +260,34 @@ def createManuscript(narrative, corpora):
 	
 	manuscript["text"].append("Here's another folk story.")
 	
-	# Act 1
-	manuscript["text"].append(p.name + " was " + aan(p.virtue) + " but " + p.vice + " " + p.identity.title() + ".")
-	manuscript["text"].append("Like all the animals, " + p.name + " lived under the tyranny of " + v.name + " the " + v.virtue.capitalize() + " " + v.identity.title() + ".")
+	plot = Plotter.generatePlot()
 	
-	# Act 2
-	manuscript["text"].append("One day, " + m.name + " the " + m.identity.title() + " asked for " + p.name + "'s help to rid them of " + v.name + ".")
-	manuscript["text"].append(p.name + " agreed, and together they learned that " + v.name + " was prone to being " + v.vice + "." )
+	logger.info("plot is " + str(plot))
 	
-	# Act 3
-	
-	if (narrative.form == "heroic"):
-		manuscript["text"].append("By the time they finally met, " + p.name + " had learned to be more " + p.lackingVirtueKey + ", and played on " + v.name + "'s " + v.vice + " side.")
-		manuscript["text"].append(v.name + " was vanquished, and the animals lived happily ever after.")
-	elif (narrative.form == "tragic"):
-		manuscript["text"].append("When they finally met, the " + v.identity + " " + v.name + " was feeling particularly " + v.virtue + ", and " + p.name + " could not help but be " + p.vice + ".")
-		manuscript["text"].append(p.name + " was defeated, and " + m.name + " fled to seek a true hero. The end... or is it?")
-	else:
-		logger.error("No third act!")
-		manusript.text.append("... the end, I guess?!")
+	for scene in plot["scenes"]:
+		logger.info(" scene = " + str(scene))
+		if (scene["purpose"] == "introduce-protagonist"):
+				manuscript["text"].append(p.name + " was " + aan(p.virtue) + " but " + p.vice + " " + p.identity.title() + ".")
+				manuscript["text"].append("Like all the animals, " + p.name + " lived under the tyranny of " + v.name + " the " + v.virtue.capitalize() + " " + v.identity.title() + ".")
+		elif (scene["purpose"] == "inciting-incident"):
+				manuscript["text"].append("One day, " + m.name + " the " + m.identity.title() + " asked for " + p.name + "'s help to rid them of " + v.name + ", and " + m.name + " agreed.")
+		elif (scene["purpose"] == "protagonist-learns"):
+				manuscript["text"].append("Together they learned that " + v.name + " was prone to being " + v.vice + "." )		
+		elif (scene["purpose"] == "lowest-ebb"):
+				manuscript["text"].append("Whilst adventuring, " + p.name + " felt " + p.vice + " and almost gave up.")						
+		elif (scene["purpose"] == "resolve-climax"):
+				if (narrative.form == "heroic"):
+					manuscript["text"].append("By the time they finally met, " + p.name + " had learned to be more " + p.lackingVirtueKey + ", and played on " + v.name + "'s " + v.vice + " side.")
+					manuscript["text"].append(v.name + " was vanquished, and the animals lived happily ever after.")
+				elif (narrative.form == "tragic"):
+					manuscript["text"].append("When they finally met " + v.name + ", the " + v.identity + " was feeling particularly " + v.virtue + ", and " + p.name + " could not help but be " + p.vice + ".")
+					manuscript["text"].append(p.name + " was defeated, and " + m.name + " fled to seek a true hero. The end... or is it?")
+				else:
+					logger.error("No third act!")
+					manusript.text.append("... the end, I guess?!")
+		else:
+			logger.error("NO SCENE FOUND!")
+			
 		
 	#logger.info("manuscript json is:\n" + json.dumps(manuscript))
 	
@@ -294,7 +305,7 @@ def saveManuscriptToS3(manuscript, s3):
 	except:
 		logger.error("Exception while trying to write to s3 :(")
 	
-def saveManuscriptAndIdToDynamoDB(manuscript, lastTweetId, dynamodb):
+def saveManuscriptAndIdToDynamoDB(manuscript, lastTweetId, dynamodb, env):
 	logger.info("saveManuscriptToDynamoDB() running...")
 	
 	try:
@@ -302,7 +313,7 @@ def saveManuscriptAndIdToDynamoDB(manuscript, lastTweetId, dynamodb):
 		
 		response1 = table.put_item(
 			Item={
-				'myPartitionKey': 'Manuscript',
+				'myPartitionKey': env + 'Manuscript',
 				'myJson': json.dumps(manuscript)
 			}
 		)
@@ -313,7 +324,7 @@ def saveManuscriptAndIdToDynamoDB(manuscript, lastTweetId, dynamodb):
 			
 		response2 = table.put_item(
 			Item={
-				'myPartitionKey': 'lastTweetId',
+				'myPartitionKey': env + 'lastTweetId',
 				'myJson': json.dumps(lastTweetId)
 			}
 		)
@@ -324,13 +335,12 @@ def saveManuscriptAndIdToDynamoDB(manuscript, lastTweetId, dynamodb):
 		
 	## ## ## ## ## ## ## ## ! ! ! ! ! ! ! !
 	
-def deleteManuscriptFromDynamoDB(dynamodb):
+def deleteManuscriptFromDynamoDB(dynamodb, env):
 	logger.info("deleteManuscriptFromDynamoDB() running...")
 	
 	try:
 		table = dynamodb.Table('storypybotmike')
-	
-		response = table.delete_item(Key={'myPartitionKey': 'Manuscript'})
+		response = table.delete_item(Key={'myPartitionKey': env + 'Manuscript'})
 	except Exception as ee:
 		logger.error("Unexpected exception deleting from DB " + str(ee))
 		raise
@@ -439,17 +449,24 @@ def aan(s):
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## PLOTTER ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
 class Plotter:
-	def generatePlot:
+	def generatePlot():
+		plot = {}
 		plot["scenes"] = []
 		plot["scenes"].append({"purpose": "introduce-protagonist"})
 		plot["scenes"].append({"purpose": "inciting-incident"})
 		plot["scenes"].append({"purpose": "protagonist-learns"})
+		if (random.randint(0, 1)):
+			plot["scenes"].append({"purpose": "lowest-ebb"})
+		else:
+			pass
 		plot["scenes"].append({"purpose": "resolve-climax"})
+		return plot
 	
 	
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## EXECUTION HOOKS ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##  
 # Configure this in lambda as the handler that Lambda will invoke
-## Here's an example production event
+
+# Here's an example CloudWatch event
 """
 {
     "version": "0",
@@ -475,6 +492,50 @@ class Plotter:
   "detail": {}
 }
 """
+# Here's an example of a (test) API Gateway event
+"""
+	{
+		'resource': '/api/storypybotmike', 
+		'path': '/api/storypybotmike', 
+		'httpMethod': 'POST', 
+		'headers': None, 
+		'multiValueHeaders': None, 
+		'queryStringParameters': None, 
+		'multiValueQueryStringParameters': None, 
+		'pathParameters': None, 
+		'stageVariables': None, 
+		'requestContext': {
+			'path': '/api/storypybotmike', 
+			'accountId': '533996033834', 
+			'resourceId': 'p859f3', 
+			'stage': 'test-invoke-stage',
+			'domainPrefix': 'testPrefix', 
+			'requestId': 'bc03e291-f7e6-11e8-87b8-1938c5a1a3e7', 
+			'identity': {
+				'cognitoIdentityPoolId': None, 
+				'cognitoIdentityId': None, 
+				'apiKey': 'test-invoke-api-key',
+				'cognitoAuthenticationType': None, 
+				'userArn': 'arn:aws:iam::533996033834:user/mds-aws-admin', 
+				'apiKeyId': 'test-invoke-api-key-id',
+				'userAgent': 'aws-internal/3 aws-sdk-java/1.11.447 Linux/4.9.124-0.1.ac.198.71.329.metal1.x86_64 OpenJDK_64-Bit_Server_VM/25.192-b12 java/1.8.0_192', 
+				'accountId': '533996033834', 
+				'caller': 'AIDAJ7ISFMUTAU6GJMJRO', 
+				'sourceIp': 'test-invoke-source-ip', 
+				'accessKey': 'XXXXXXXXXXXXXXXXXXXX',
+				'cognitoAuthenticationProvider': None, 
+				'user': 'XXXXXXXXXXXXXXXXXXXXX'
+			}, 
+			'domainName': 'testPrefix.testDomainName', 
+			'resourcePath': '/api/storypybotmike', 
+			'httpMethod': 'POST', 
+			'extendedRequestId': 'RZEFbEBtoAMFSHA=', 
+			'apiId': '8iuzi748v6'
+		}, 
+		'body': None, 
+		'isBase64Encoded': False
+	}
+"""
 
 def lambda_handler(event, _context):
 	logger.info("Running lambda_handler()")
@@ -490,16 +551,31 @@ def lambda_handler(event, _context):
 	
 	try:
 		if (event["detail-type"] == "Scheduled Event"):
-			env = "Lambda Production"
+			env = "LambdaProduction"
 			logger.info("event['detail-type'] == 'Scheduled Event'")
 		elif (event["detail-type"]  == "Custom Test Event"):
-			env = "Lambda Testing"
+			env = "LambdaTesting"
 			logger.info("event['detail-type'] == 'Custom Test Event'")
 		else:
 			env = None
 			logger.error("Unexpected event JSON! Not invoking main()")
+			raise
 	except Exception as ee:
-		logger.error("Unidentified Exception whilst looking for event['detail-type']!")
+		logger.info("Didn't find event['detail-type'], now checking for HTTP invocation...")
+		try:
+			if (event["requestContext"]["stage"] == 'test-invoke-stage'):
+				logger.info("event[\"requestContext\"][\"stage\"] == \"test-invoke-stage\"]")
+				env = "APIGatewayTesting"
+			elif (event["requestContext"]["stage"] == 'prod'):
+				logger.info("event[\"requestContext\"][\"stage\"] == \"prod\"]")
+				env = "APIGatewayProd"
+			else:
+				env = None
+				logger.error("Couldn't identify environment!")
+				raise
+		except Exception as eee:
+			logger.error("Exception " + str(eee) + " while trying to find API Gateway environment")
+			raise eee
 		
 	if (env == None):
 		logger.info("Not invoking main()")
